@@ -81,4 +81,4 @@ yarn build
 
 
 
-![Image alt](https://github.com/ozalexander/web-larek-frontend/blob/main/image.png)
+![Image alt](https://github.com/ozalexander/web-larek-frontend/blob/main/src/images/image.png)
