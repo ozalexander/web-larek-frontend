@@ -12,10 +12,16 @@ export interface ItemList extends IProduct<string> {
   loadBasketState(count: number): number;
 }
 
-export interface IBasket {
+export interface IBasket<T> {
   items: Map<string, number>;
-  add(id:string): void;
-  remove(id:string): void;
+  orderDetails: {
+    paymentMethod: T;
+    address: T;
+    email: T;
+    phone: T;
+  };
+  add(id:T): void;
+  remove(id:T): void;
 }
 export type Delivery = {
   payment: HTMLSelectElement;
