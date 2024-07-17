@@ -1,6 +1,6 @@
 export interface IProduct<T> {
   id: T;
-  description: T;
+  description?: T;
   image: T;
   title: T;
   category: T;
@@ -27,14 +27,9 @@ export type Delivery = {
   payment: HTMLSelectElement;
   address: string;
 }
-
 export type PersonalData = {
   email: string;
   phone: string;
-}
-
-export interface IEventEmitter {
-  emit: (event: string, data: unknown) => void;
 }
 
 export interface ISuccessfulOrder {
