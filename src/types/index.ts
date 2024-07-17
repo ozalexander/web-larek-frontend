@@ -15,10 +15,10 @@ export interface ItemList extends IProduct<string> {
 export interface IBasket<T> {
   items: Map<string, number>;
   orderDetails: {
-    paymentMethod: T;
-    address: T;
-    email: T;
-    phone: T;
+    paymentMethod?: T;
+    address?: T;
+    email?: T;
+    phone?: T;
   };
   add(id:T): void;
   remove(id:T): void;
