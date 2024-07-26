@@ -7,21 +7,27 @@ export interface IProduct<T> {
   price: number | null;
 }
 
-export interface ItemList extends IProduct<string> {
-  loadCatalog(list: IProduct<string>[]): HTMLElement;
-  loadBasketState(count: number): number;
+export interface IProductList {
+  catalog: IProduct<string>[];
+  loadCatalog(data: IProduct<string>[]): void;
+  loadBasketState(): void;
+}
+
+export interface ICardActions {
+  onClick: (event: MouseEvent) => void;
 }
 
 export interface IBasket<T> {
   items: Map<string, number>;
-  orderDetails: {
-    paymentMethod?: T;
-    address?: T;
-    email?: T;
-    phone?: T;
-  };
   add(id:T): void;
   remove(id:T): void;
+}
+
+export interface IOrder<T> {
+  paymentMethod?: T;
+  address?: T;
+  email?: T;
+  phone?: T;
 }
 export type Delivery = {
   payment: HTMLSelectElement;
@@ -38,3 +44,7 @@ export interface ISuccessfulOrder {
 }
 
 export type Error = string;
+
+export interface IModal {
+  content: HTMLElement;
+}
