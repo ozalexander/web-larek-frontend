@@ -27,25 +27,65 @@ export class AppState extends Model<AppState> implements IProductList {
 
   catalog: IProduct<string>[];
 
-  basket: string[];
+  basket: Map<string, Product> = new Map();
 
-  order: IOrder<string>;
+  order: Partial<IOrder<string>> = {
+    paymentMethod: '',
+    address: '',
+    phone: '',
+    email: '',
+  };
 
-  error: Error;
+  formErrors: Partial<IOrder<string>>;
+
+  total: number;
 
   loadCatalog(items: IProduct<string>[]): void {
     this.catalog = items.map(item => new Product(item));;
     this.emitChanges('items:changed', { catalog: this.catalog });
   }
-  loadBasketState(): void {
-    this.basket
+  loadBasketState(item: Product): void {
+    this.basket.set(item.id, item);
+    this.emitChanges('basket:changed', this.basket);
   }
-
   loadPreview(item: IProduct<string>): void {
     this.emitChanges('preview:changed', item);
   }
 
-  loadBasketCounter(): number {
-    return this.basket.length
+  getTotal(): number {
+    this.total = 0;
+    this.basket.forEach(item => {
+      this.total += item.price;
+    })
+    return this.total
   }
+
+  loadBasketCounter(): number {
+    return this.basket ? this.basket.size : 0
+  }
+
+  clearBasket() {
+    this.basket.clear();
+  };
+
+  setOrderField(field: keyof IOrder<string>, value: string) {
+    this.order[field] = value;
+
+    if (this.validateOrder()) {
+        this.events.emit('order:ready', this.order);
+    }
+}
+
+  validateOrder() {
+    const errors: typeof this.formErrors = {};
+    if (!this.order.email) {
+        errors.email = 'Необходимо указать email';
+    }
+    if (!this.order.phone) {
+        errors.phone = 'Необходимо указать телефон';
+    }
+    this.formErrors = errors;
+    this.events.emit('formErrors:change', this.formErrors);
+    return Object.keys(errors).length === 0;
+}
 }

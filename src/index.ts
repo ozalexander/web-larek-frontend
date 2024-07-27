@@ -9,9 +9,10 @@ import { Page } from './components/Page';
 import { Error } from './types';
 import { cloneTemplate } from './utils/utils';
 import { Modal } from './components/common/Modal';
-import { IProduct } from './types';
+import { IProduct, IOrder } from './types';
 import { Basket } from './components/common/Basket';
 import { Order } from './components/Order';
+import { Success } from './components/common/Success';
 
 const events = new EventEmitter();
 const api = new ProductListAPI(CDN_URL, API_URL)
@@ -35,6 +36,10 @@ const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events)
 
 const basket = new Basket(cloneTemplate(basketTemplate), events)
 
+const order = new Order(cloneTemplate(orderTemplate), events)
+
+const orderContacts = new Order(cloneTemplate(contactsTemplate), events)
+
 events.on<CatalogChangeEvent>('items:changed', () => {
   page.catalog = appData.catalog.map(item => {
       const card = new CardCatalog(cloneTemplate(cardCatalogTemplate), {
@@ -54,7 +59,8 @@ events.on('card:select', (item: IProduct<string>) => {
   const showItem = (item: IProduct<string>) => {
       const card = new CardCatalog(cloneTemplate(cardPreviewTemplate));
       card.button.addEventListener('click', () => {
-          events.emit('basket:add', [item.id, item.title, item.price]);
+          events.emit('basket:add', item);
+          modal.close();
       })
       modal.render({
           content: card.render({
@@ -69,19 +75,93 @@ events.on('card:select', (item: IProduct<string>) => {
   showItem(item);
 });
 
-events.on('basket:add', (item: string[]) => {
-  const card = new CardCatalog(cloneTemplate(cardBasketTemplate));
-  // basket.items([card.render({
-  //   title: item[1],
-  //   price: item[2],
-  // })]);
+events.on('basket:add', (item: IProduct<string>) => {
+  appData.loadBasketState(item);
+  const listArray = Array.from(appData.basket.values()).map(product => {
+    const card = new CardCatalog(cloneTemplate(cardBasketTemplate));
+    card.button.addEventListener('click', () => {
+        events.emit('basket:remove', product);
+        newCard.remove();
+    })
+    const newCard = card.render({
+      title: product.title,
+      price: product.price,
+  });
+  return newCard;
+  })
+  basket.items = listArray
+})
+
+events.on('basket:changed', () => {
+  basket.total = appData.getTotal();
+  page.counter = appData.loadBasketCounter();
+  basket.selected = appData.basket;
+  if (appData.getTotal()===0) {
+    basket.items = []
+  }
+})
+
+events.on('basket:remove', (item: IProduct<string>) => {
+  appData.basket.delete(item.id);
+  events.emit('basket:changed');
 })
 
 events.on('basket:open', (item: IProduct<string>) => {
   modal.render({
-    content: basket.render({})
+    content: basket.render()
+  })
+  basket.selected = appData.basket;
+  basket.total = appData.getTotal();
+})
+
+events.on('order:open', () => {
+  order.card.addEventListener('click', () => {
+    order.cash.classList.remove('button_alt-active')
+    order.card.classList.toggle('button_alt-active')
+  })
+  order.cash.addEventListener('click', () => {
+    order.card.classList.remove('button_alt-active')
+    order.cash.classList.toggle('button_alt-active')
+  })
+  modal.render({
+    content: order.render({
+      paymentMethod: '',
+      address: '',
+      valid: false,
+      errors: [],
+    })
   })
 })
+
+events.on('order:contacts', () => {
+  modal.render({
+      content: orderContacts.render({
+        email: '',
+        phone: '',
+        valid: false,
+        errors: [],
+    })
+  })
+})
+
+events.on('order:success', () => {
+  const orderSuccess = new Success(cloneTemplate(successTemplate), {
+    onClick: () => {
+      modal.close();
+      appData.clearBasket();
+      events.emit('basket:changed');
+  }
+  })
+  modal.render({
+    content: orderSuccess.render()
+  })
+})
+
+events.on('formErrors:change', (errors: Partial<IOrder<string>>) => {
+  const { email, phone } = errors;
+  order.valid = !email && !phone;
+  order.errors = Object.values({phone, email}).filter(i => !!i).join('; ');
+});
 
 events.on('modal:open', () => {
   page.locked = true;

@@ -10,7 +10,7 @@ export interface IProduct<T> {
 export interface IProductList {
   catalog: IProduct<string>[];
   loadCatalog(data: IProduct<string>[]): void;
-  loadBasketState(): void;
+  loadBasketState(item: IProduct<string>): void;
 }
 
 export interface ICardActions {
@@ -24,10 +24,10 @@ export interface IBasket<T> {
 }
 
 export interface IOrder<T> {
-  paymentMethod?: T;
-  address?: T;
-  email?: T;
-  phone?: T;
+  paymentMethod: T;
+  address: T;
+  email: T;
+  phone: T;
 }
 export type Delivery = {
   payment: HTMLSelectElement;
