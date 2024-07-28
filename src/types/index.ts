@@ -24,13 +24,16 @@ export interface IBasket<T> {
 }
 
 export interface IOrder<T> {
-  paymentMethod: T;
-  address: T;
-  email: T;
-  phone: T;
+  paymentMethod?: T;
+  address?: T;
+  email?: T;
+  phone?: T;
+  order?: T;
 }
+
+export type FormErrors = Partial<Record<keyof IOrder<string>, string>>;
 export type Delivery = {
-  payment: HTMLSelectElement;
+  paymentMethod: string;
   address: string;
 }
 export type PersonalData = {
@@ -42,8 +45,6 @@ export interface ISuccessfulOrder {
   id: string;
   total: number;
 }
-
-export type Error = string;
 
 export interface IModal {
   content: HTMLElement;

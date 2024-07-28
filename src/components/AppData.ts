@@ -1,4 +1,4 @@
-import { IProductList, IProduct, IBasket, Delivery, PersonalData, IOrder, Error } from '../types/index';
+import { IProductList, IProduct, IBasket, Delivery, PersonalData, IOrder, FormErrors } from '../types/index';
 import { Model } from './base/Model';
 
 export type CatalogChangeEvent = {
@@ -29,16 +29,23 @@ export class AppState extends Model<AppState> implements IProductList {
 
   basket: Map<string, Product> = new Map();
 
-  order: Partial<IOrder<string>> = {
+  order: IOrder<string> = {
     paymentMethod: '',
     address: '',
-    phone: '',
-    email: '',
   };
 
-  formErrors: Partial<IOrder<string>>;
+  contacts: IOrder<string> = {
+    email: '',
+    phone: '',
+  }
+
+  formErrors: FormErrors = {};
 
   total: number;
+
+  set payment(value: string) {
+    this.order.paymentMethod = value;
+  }
 
   loadCatalog(items: IProduct<string>[]): void {
     this.catalog = items.map(item => new Product(item));;
@@ -70,22 +77,40 @@ export class AppState extends Model<AppState> implements IProductList {
 
   setOrderField(field: keyof IOrder<string>, value: string) {
     this.order[field] = value;
-
-    if (this.validateOrder()) {
-        this.events.emit('order:ready', this.order);
+    if (field === 'order' || field === 'address') {
+      if (this.validateOrder()) {
+          this.events.emit('order:ready', this.order);
+      }
+    } else {
+      if (this.validateContacts()) {
+          this.events.emit('contacts:ready', this.contacts);
+      }
     }
 }
 
   validateOrder() {
     const errors: typeof this.formErrors = {};
-    if (!this.order.email) {
-        errors.email = 'Необходимо указать email';
+    if (!this.order.paymentMethod) {
+        errors.paymentMethod = 'Необходимо выбрать способ оплаты';
     }
-    if (!this.order.phone) {
-        errors.phone = 'Необходимо указать телефон';
+    if (!this.order.address) {
+        errors.address = 'Необходимо указать адрес доставки';
     }
     this.formErrors = errors;
     this.events.emit('formErrors:change', this.formErrors);
     return Object.keys(errors).length === 0;
 }
+
+  validateContacts() {
+    const errors: typeof this.formErrors = {};
+    if (!this.contacts.email) {
+        errors.email = 'Необходимо указать почту';
+    }
+    if (!this.contacts.phone) {
+        errors.phone = 'Необходимо указать телефон';
+    }
+    this.formErrors = errors;
+    this.events.emit('formErrors:change', this.formErrors);
+    return Object.keys(errors).length === 0;
+  }
 }

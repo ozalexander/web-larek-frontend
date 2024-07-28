@@ -4,12 +4,11 @@ import { API_URL, CDN_URL } from './utils/constants';
 import { EventEmitter } from './components/base/events';
 import { CardCatalog } from './components/Card';
 import { ensureElement } from './utils/utils';
-import { AppState, CatalogChangeEvent, Product } from './components/AppData';
+import { AppState, CatalogChangeEvent} from './components/AppData';
 import { Page } from './components/Page';
-import { Error } from './types';
 import { cloneTemplate } from './utils/utils';
 import { Modal } from './components/common/Modal';
-import { IProduct, IOrder } from './types';
+import { IProduct, IOrder, Delivery } from './types';
 import { Basket } from './components/common/Basket';
 import { Order } from './components/Order';
 import { Success } from './components/common/Success';
@@ -115,13 +114,22 @@ events.on('basket:open', (item: IProduct<string>) => {
 })
 
 events.on('order:open', () => {
+  const valid = () => events.emit(`order.button:change`, {
+    field : 'order',
+    value : 'active'
+  })
+
   order.card.addEventListener('click', () => {
-    order.cash.classList.remove('button_alt-active')
-    order.card.classList.toggle('button_alt-active')
+    order.cash.classList.remove('button_alt-active');
+    order.card.classList.toggle('button_alt-active');
+    appData.payment = 'card';
+    valid();
   })
   order.cash.addEventListener('click', () => {
-    order.card.classList.remove('button_alt-active')
-    order.cash.classList.toggle('button_alt-active')
+    order.card.classList.remove('button_alt-active');
+    order.cash.classList.toggle('button_alt-active');
+    appData.payment = 'cash';
+    valid();
   })
   modal.render({
     content: order.render({
@@ -133,18 +141,26 @@ events.on('order:open', () => {
   })
 })
 
-events.on('order:contacts', () => {
+events.on('order:submit', () => {
   modal.render({
-      content: orderContacts.render({
-        email: '',
-        phone: '',
-        valid: false,
-        errors: [],
-    })
+    content: orderContacts.render({
+      email: '',
+      phone: '',
+      valid: false,
+      errors: [],
   })
 })
+})
 
-events.on('order:success', () => {
+events.on(/^order\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
+  appData.setOrderField(data.field, data.value);
+});
+
+events.on(/^contacts\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
+  appData.setOrderField(data.field, data.value);
+});
+
+events.on('contacts:submit', () => {
   const orderSuccess = new Success(cloneTemplate(successTemplate), {
     onClick: () => {
       modal.close();
@@ -158,9 +174,15 @@ events.on('order:success', () => {
 })
 
 events.on('formErrors:change', (errors: Partial<IOrder<string>>) => {
-  const { email, phone } = errors;
-  order.valid = !email && !phone;
-  order.errors = Object.values({phone, email}).filter(i => !!i).join('; ');
+  if (appData.order.paymentMethod) {
+    const { paymentMethod, address } = errors;
+    order.valid = !paymentMethod && !address;
+    order.errors = Object.values({paymentMethod, address}).filter(i => !!i).join('; ');
+  } else {
+    const { email, phone } = errors;
+    order.valid = !email && !phone;
+    order.errors = Object.values({email, phone}).filter(i => !!i).join('; ');
+  }
 });
 
 events.on('modal:open', () => {

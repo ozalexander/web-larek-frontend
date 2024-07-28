@@ -1,4 +1,4 @@
-import { IProductList, IProduct } from '../types/index';
+import { IProduct } from '../types/index';
 import { Api, ApiListResponse } from './base/api';
 
 export class ProductListAPI extends Api {

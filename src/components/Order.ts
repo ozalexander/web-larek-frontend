@@ -1,13 +1,17 @@
 import { Form } from "./common/Form";
-import { IOrder, ICardActions } from "../types";
+import { IOrder} from "../types";
 import { IEvents } from "./base/events";
 
 export class Order<T> extends Form<IOrder<T>> {
-    card = this.container.elements.namedItem('card') as HTMLSelectElement;
-    cash = this.container.elements.namedItem('cash') as HTMLSelectElement;
+    card? = this.container.elements.namedItem('card') as HTMLSelectElement;
+    cash? = this.container.elements.namedItem('cash') as HTMLSelectElement;
 
     constructor(container: HTMLFormElement,events: IEvents) {
         super(container, events);
+    }
+
+    set payment(value: string) {
+        (this.container.elements.namedItem('payment') as HTMLSelectElement).value = value;
     }
     set address(value: string) {
         (this.container.elements.namedItem('address') as HTMLInputElement).value = value;
