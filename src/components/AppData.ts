@@ -1,4 +1,4 @@
-import { IProductList, IProduct, IBasket, Delivery, PersonalData, IOrder, FormErrors } from '../types/index';
+import { IProductList, IProduct, IOrder, FormErrors } from '../types/index';
 import { Model } from './base/Model';
 
 export type CatalogChangeEvent = {
@@ -30,26 +30,29 @@ export class AppState extends Model<AppState> implements IProductList {
   basket: Map<string, Product> = new Map();
 
   order: IOrder<string> = {
-    paymentMethod: '',
+    payment: '',
     address: '',
-  };
-
-  contacts: IOrder<string> = {
     email: '',
     phone: '',
-  }
+  };
 
   formErrors: FormErrors = {};
 
   total: number;
 
   set payment(value: string) {
-    this.order.paymentMethod = value;
+    this.order.payment = value;
   }
 
   loadCatalog(items: IProduct<string>[]): void {
     this.catalog = items.map(item => new Product(item));;
     this.emitChanges('items:changed', { catalog: this.catalog });
+  }
+
+  items(): string[] {
+    const id: string[] = [];
+    this.basket.forEach(item => id.push(item.id));
+    return id
   }
   loadBasketState(item: Product): void {
     this.basket.set(item.id, item);
@@ -77,37 +80,21 @@ export class AppState extends Model<AppState> implements IProductList {
 
   setOrderField(field: keyof IOrder<string>, value: string) {
     this.order[field] = value;
-    if (field === 'order' || field === 'address') {
-      if (this.validateOrder()) {
-          this.events.emit('order:ready', this.order);
-      }
-    } else {
-      if (this.validateContacts()) {
-          this.events.emit('contacts:ready', this.contacts);
-      }
-    }
+    this.validateOrder()
 }
-
   validateOrder() {
     const errors: typeof this.formErrors = {};
-    if (!this.order.paymentMethod) {
-        errors.paymentMethod = 'Необходимо выбрать способ оплаты';
+    if (!this.order.payment) {
+        errors.payment = 'Необходимо выбрать способ оплаты';
     }
     if (!this.order.address) {
         errors.address = 'Необходимо указать адрес доставки';
     }
-    this.formErrors = errors;
-    this.events.emit('formErrors:change', this.formErrors);
-    return Object.keys(errors).length === 0;
-}
-
-  validateContacts() {
-    const errors: typeof this.formErrors = {};
-    if (!this.contacts.email) {
-        errors.email = 'Необходимо указать почту';
+    if (!this.order.email) {
+      errors.email = 'Необходимо указать почту';
     }
-    if (!this.contacts.phone) {
-        errors.phone = 'Необходимо указать телефон';
+    if (!this.order.phone) {
+      errors.phone = 'Необходимо указать телефон';
     }
     this.formErrors = errors;
     this.events.emit('formErrors:change', this.formErrors);

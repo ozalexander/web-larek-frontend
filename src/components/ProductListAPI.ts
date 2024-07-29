@@ -1,4 +1,4 @@
-import { IProduct } from '../types/index';
+import { IProduct, IMakeOrder } from '../types/index';
 import { Api, ApiListResponse } from './base/api';
 
 export class ProductListAPI extends Api {
@@ -16,6 +16,9 @@ export class ProductListAPI extends Api {
           ...item,
           image: this.cdn + item.image
       })))
+  }
+  makeOrder(order: IMakeOrder): Promise<object> {
+    return this.post('/order', order)
   }
 }
 

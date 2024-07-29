@@ -8,17 +8,13 @@ import { AppState, CatalogChangeEvent} from './components/AppData';
 import { Page } from './components/Page';
 import { cloneTemplate } from './utils/utils';
 import { Modal } from './components/common/Modal';
-import { IProduct, IOrder, Delivery } from './types';
+import { IProduct, IOrder, IMakeOrder, ISuccessfulOrder } from './types';
 import { Basket } from './components/common/Basket';
 import { Order } from './components/Order';
 import { Success } from './components/common/Success';
 
 const events = new EventEmitter();
 const api = new ProductListAPI(CDN_URL, API_URL)
-
-events.onAll(({ eventName, data }) => {
-  console.log(eventName, data);
-})
 
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
@@ -29,14 +25,10 @@ const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
 const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
 
 const appData = new AppState({}, events)
-
 const page = new Page(document.body, events)
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events)
-
 const basket = new Basket(cloneTemplate(basketTemplate), events)
-
 const order = new Order(cloneTemplate(orderTemplate), events)
-
 const orderContacts = new Order(cloneTemplate(contactsTemplate), events)
 
 events.on<CatalogChangeEvent>('items:changed', () => {
@@ -115,7 +107,7 @@ events.on('basket:open', (item: IProduct<string>) => {
 
 events.on('order:open', () => {
   const valid = () => events.emit(`order.button:change`, {
-    field : 'order',
+    field : 'paymentMethod',
     value : 'active'
   })
 
@@ -133,15 +125,17 @@ events.on('order:open', () => {
   })
   modal.render({
     content: order.render({
-      paymentMethod: '',
+      payment: '',
       address: '',
       valid: false,
       errors: [],
     })
   })
+  
 })
 
 events.on('order:submit', () => {
+  document.body.classList.remove('button_alt-active');
   modal.render({
     content: orderContacts.render({
       email: '',
@@ -152,36 +146,44 @@ events.on('order:submit', () => {
 })
 })
 
-events.on(/^order\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
-  appData.setOrderField(data.field, data.value);
-});
-
-events.on(/^contacts\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
+events.on(/^order\..*|^contacts\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
   appData.setOrderField(data.field, data.value);
 });
 
 events.on('contacts:submit', () => {
-  const orderSuccess = new Success(cloneTemplate(successTemplate), {
-    onClick: () => {
-      modal.close();
-      appData.clearBasket();
-      events.emit('basket:changed');
+  const postOrder: IMakeOrder = {
+    ...appData.order,
+    total: appData.total,
+    items: appData.items(),
   }
+  console.log(postOrder);
+  api.makeOrder(postOrder)
+  .then((res: ISuccessfulOrder) => {
+    const orderSuccess = new Success(cloneTemplate(successTemplate), {
+      onClick: () => {
+        modal.close();
+        appData.clearBasket();
+        events.emit('basket:changed');
+      }
+    })
+    modal.render({
+      content: orderSuccess.render()
+    })
+    orderSuccess.total = res.total;
   })
-  modal.render({
-    content: orderSuccess.render()
-  })
+  .catch(err => console.error(err))
 })
 
 events.on('formErrors:change', (errors: Partial<IOrder<string>>) => {
-  if (appData.order.paymentMethod) {
-    const { paymentMethod, address } = errors;
-    order.valid = !paymentMethod && !address;
-    order.errors = Object.values({paymentMethod, address}).filter(i => !!i).join('; ');
-  } else {
+  if (order) {
+    const { payment, address } = errors;
+    order.valid = !payment && !address;
+    order.errors = Object.values({payment, address}).filter(i => !!i).join('; ');
+  } 
+  if (orderContacts) {
     const { email, phone } = errors;
-    order.valid = !email && !phone;
-    order.errors = Object.values({email, phone}).filter(i => !!i).join('; ');
+    orderContacts.valid = !email && !phone;
+    orderContacts.errors = Object.values({email, phone}).filter(i => !!i).join('; ');
   }
 });
 

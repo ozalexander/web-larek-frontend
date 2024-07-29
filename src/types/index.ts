@@ -24,22 +24,18 @@ export interface IBasket<T> {
 }
 
 export interface IOrder<T> {
-  paymentMethod?: T;
-  address?: T;
-  email?: T;
-  phone?: T;
-  order?: T;
+  payment: T;
+  address: T;
+  email: T;
+  phone: T;
+}
+
+export interface IMakeOrder extends IOrder<string> {
+  total: number;
+  items: string[];
 }
 
 export type FormErrors = Partial<Record<keyof IOrder<string>, string>>;
-export type Delivery = {
-  paymentMethod: string;
-  address: string;
-}
-export type PersonalData = {
-  email: string;
-  phone: string;
-}
 
 export interface ISuccessfulOrder {
   id: string;
