@@ -13,14 +13,19 @@ export interface IProductList {
   loadBasketState(item: IProduct<string>): void;
 }
 
+export interface IFormState {
+  valid: boolean;
+  errors: string[];
+}
+
 export interface ICardActions {
   onClick: (event: MouseEvent) => void;
 }
 
-export interface IBasket<T> {
-  items: Map<string, number>;
-  add(id:T): void;
-  remove(id:T): void;
+export interface IBasketView {
+  items: HTMLElement[];
+  total: number;
+  selected: string[];
 }
 
 export interface IOrder<T> {
@@ -44,4 +49,18 @@ export interface ISuccessfulOrder {
 
 export interface IModal {
   content: HTMLElement;
+}
+
+export interface ISuccess {
+  total: number;
+}
+
+export interface ISuccessActions {
+  onClick: () => void;
+}
+
+export interface IPage {
+  counter: number;
+  catalog: HTMLElement[];
+  locked: boolean;
 }

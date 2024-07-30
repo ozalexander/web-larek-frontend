@@ -1,7 +1,5 @@
-import { Component } from "./base/Components";
-import { ICardActions } from "../types/index";
-import { ensureElement, bem, createElement } from "../utils/utils";
-
+import { Component } from "../base/Components";
+import { ICardActions } from "../../types/index";
 
 export class CardCatalog<T> extends Component<T> {
   protected _title: HTMLElement;
@@ -9,7 +7,7 @@ export class CardCatalog<T> extends Component<T> {
   protected _price: HTMLElement;
   protected _category: HTMLElement;
   protected _description: HTMLElement;
-  button?: HTMLElement;
+  protected _button: HTMLElement;
   
   protected _categoryColor: { [key: string]: string } = {
     'софт-скил': '_soft',
@@ -27,7 +25,7 @@ export class CardCatalog<T> extends Component<T> {
     this._price = container.querySelector(`.card__price`);
     this._category = container.querySelector(`.card__category`);
     this._description = container.querySelector(`.card__text`);
-    this.button = container.querySelector('.card__button');
+    this._button = container.querySelector('.card__button');
 
     if (actions?.onClick) {
       if (this.container) {
@@ -37,9 +35,6 @@ export class CardCatalog<T> extends Component<T> {
 }
   set title(value: string) {
     this.setText(this._title, value);
-  }
-  get title(): string {
-    return this._title.textContent || '';
   }
 
   set description(value: string) {
@@ -56,12 +51,14 @@ export class CardCatalog<T> extends Component<T> {
     this._category.className = `card__category card__category${this._categoryColor[value]}`
   }
   set price(value: string) {
-    value === null 
-    ? this.setText(this._price, 'Бесценно')
-    : this.setText(this._price, value);
+    if (value === null){
+      this.setText(this._price, 'Бесценно')
+      this.setDisabled(this._button, true)
+    } else {
+      this.setText(this._price, value);
+    }
   }
   set image(value: string) {
     this.setImage(this._image, value, this.title)
   }
-
 }

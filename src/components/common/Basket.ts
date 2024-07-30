@@ -1,13 +1,7 @@
-import {Component} from "../base/Components";
-import {createElement, ensureElement} from "../../utils/utils";
-import {EventEmitter} from "../base/events";
-import { IBasket, IProduct } from "../../types";
-
-interface IBasketView {
-    items: HTMLElement[];
-    total: number;
-    selected: string[];
-}
+import { Component } from "../base/Components";
+import { createElement, ensureElement } from "../../utils/utils";
+import { EventEmitter } from "../base/events";
+import { IBasketView, IProduct } from "../../types";
 
 export class Basket extends Component<IBasketView> {
     protected _list: HTMLElement;
@@ -18,15 +12,14 @@ export class Basket extends Component<IBasketView> {
         super(container);
 
         this._list = ensureElement<HTMLElement>('.basket__list', this.container);
-        this._total = this.container.querySelector('.basket__price');
-        this._button = this.container.querySelector('.basket__button');
+        this._total = ensureElement<HTMLElement>('.basket__price', this.container);
+        this._button = ensureElement<HTMLElement>('.basket__button', this.container);
 
         if (this._button) {
             this._button.addEventListener('click', () => {
                 events.emit('order:open');
             });
         }
-
         this.items = [];
     }
 

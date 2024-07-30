@@ -2,15 +2,15 @@ import './scss/styles.scss';
 import { ProductListAPI } from './components/ProductListAPI';
 import { API_URL, CDN_URL } from './utils/constants';
 import { EventEmitter } from './components/base/events';
-import { CardCatalog } from './components/Card';
+import { CardCatalog } from './components/common/Card';
 import { ensureElement } from './utils/utils';
-import { AppState, CatalogChangeEvent} from './components/AppData';
+import { AppState, CatalogChangeEvent } from './components/AppData';
 import { Page } from './components/Page';
 import { cloneTemplate } from './utils/utils';
 import { Modal } from './components/common/Modal';
 import { IProduct, IOrder, IMakeOrder, ISuccessfulOrder } from './types';
 import { Basket } from './components/common/Basket';
-import { Order } from './components/Order';
+import { Order } from './components/common/Order';
 import { Success } from './components/common/Success';
 
 const events = new EventEmitter();
@@ -48,11 +48,12 @@ events.on<CatalogChangeEvent>('items:changed', () => {
 
 events.on('card:select', (item: IProduct<string>) => {
   const showItem = (item: IProduct<string>) => {
-      const card = new CardCatalog(cloneTemplate(cardPreviewTemplate));
-      card.button.addEventListener('click', () => {
+      const card = new CardCatalog(cloneTemplate(cardPreviewTemplate), {
+        onClick: () => {
           events.emit('basket:add', item);
           modal.close();
-      })
+      }
+      });
       modal.render({
           content: card.render({
               title: item.title,
@@ -69,15 +70,15 @@ events.on('card:select', (item: IProduct<string>) => {
 events.on('basket:add', (item: IProduct<string>) => {
   appData.loadBasketState(item);
   const listArray = Array.from(appData.basket.values()).map(product => {
-    const card = new CardCatalog(cloneTemplate(cardBasketTemplate));
-    card.button.addEventListener('click', () => {
-        events.emit('basket:remove', product);
-        newCard.remove();
-    })
+    const card = new CardCatalog(cloneTemplate(cardBasketTemplate), {
+      onClick: () => {
+             events.emit('basket:remove', product);
+             newCard.remove();
+      }});
     const newCard = card.render({
       title: product.title,
       price: product.price,
-  });
+    });
   return newCard;
   })
   basket.items = listArray
@@ -97,7 +98,7 @@ events.on('basket:remove', (item: IProduct<string>) => {
   events.emit('basket:changed');
 })
 
-events.on('basket:open', (item: IProduct<string>) => {
+events.on('basket:open', () => {
   modal.render({
     content: basket.render()
   })
@@ -106,36 +107,25 @@ events.on('basket:open', (item: IProduct<string>) => {
 })
 
 events.on('order:open', () => {
-  const valid = () => events.emit(`order.button:change`, {
-    field : 'paymentMethod',
-    value : 'active'
-  })
-
-  order.card.addEventListener('click', () => {
-    order.cash.classList.remove('button_alt-active');
-    order.card.classList.toggle('button_alt-active');
-    appData.payment = 'card';
-    valid();
-  })
-  order.cash.addEventListener('click', () => {
-    order.card.classList.remove('button_alt-active');
-    order.cash.classList.toggle('button_alt-active');
-    appData.payment = 'cash';
-    valid();
-  })
+  const valid = (paymentMethod: string) => {
+    events.emit(`order.button:change`, {
+      field : 'payment',
+      value : paymentMethod,
+    }), 
+    order.button(paymentMethod)
+  }
+  order.buttonListener(valid)
   modal.render({
     content: order.render({
-      payment: '',
       address: '',
       valid: false,
       errors: [],
     })
   })
-  
 })
 
 events.on('order:submit', () => {
-  document.body.classList.remove('button_alt-active');
+  order.button('reset');
   modal.render({
     content: orderContacts.render({
       email: '',
@@ -156,7 +146,6 @@ events.on('contacts:submit', () => {
     total: appData.total,
     items: appData.items(),
   }
-  console.log(postOrder);
   api.makeOrder(postOrder)
   .then((res: ISuccessfulOrder) => {
     const orderSuccess = new Success(cloneTemplate(successTemplate), {
