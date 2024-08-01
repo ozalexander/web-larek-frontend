@@ -61,4 +61,7 @@ export class CardCatalog<T> extends Component<T> {
   set image(value: string) {
     this.setImage(this._image, value, this.title)
   }
+  set lockButton(value: boolean) {
+    this.setDisabled(this._button, value) 
+  }
 }

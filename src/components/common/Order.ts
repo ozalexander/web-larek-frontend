@@ -1,5 +1,5 @@
 import { Form } from "../common/Form";
-import { IOrder} from "../../types";
+import { IOrder, ISuccessActions } from "../../types";
 import { IEvents } from "../base/events";
 
 export class Order<T> extends Form<IOrder<T>> {
@@ -7,11 +7,15 @@ export class Order<T> extends Form<IOrder<T>> {
     protected _cash: HTMLButtonElement;
     protected _activeButton = 'button_alt-active';
 
-    constructor(container: HTMLFormElement, events: IEvents) {
+    constructor(container: HTMLFormElement, events: IEvents, actions?: ISuccessActions) {
         super(container, events);
 
         this._card = this.container.elements.namedItem('card') as HTMLButtonElement;
         this._cash = this.container.elements.namedItem('cash') as HTMLButtonElement;
+
+        if (actions?.onClick) {
+            this.container.addEventListener('submit', actions.onClick);
+        }
     }
 
     set address(value: string) {

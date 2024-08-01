@@ -29,7 +29,13 @@ const page = new Page(document.body, events)
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events)
 const basket = new Basket(cloneTemplate(basketTemplate), events)
 const order = new Order(cloneTemplate(orderTemplate), events)
-const orderContacts = new Order(cloneTemplate(contactsTemplate), events)
+const orderContacts = new Order(cloneTemplate(contactsTemplate), events, {
+  onClick: () => {
+    appData.clearBasket();
+    events.emit('basket:changed');
+  }
+})
+const orderSuccess = new Success(cloneTemplate(successTemplate), { onClick: () => modal.close() })
 
 events.on<CatalogChangeEvent>('items:changed', () => {
   page.catalog = appData.catalog.map(item => {
@@ -54,6 +60,9 @@ events.on('card:select', (item: IProduct<string>) => {
           modal.close();
       }
       });
+      if (appData.basket.has(item.id)) {
+        card.lockButton = true
+      }
       modal.render({
           content: card.render({
               title: item.title,
@@ -148,13 +157,6 @@ events.on('contacts:submit', () => {
   }
   api.makeOrder(postOrder)
   .then((res: ISuccessfulOrder) => {
-    const orderSuccess = new Success(cloneTemplate(successTemplate), {
-      onClick: () => {
-        modal.close();
-        appData.clearBasket();
-        events.emit('basket:changed');
-      }
-    })
     modal.render({
       content: orderSuccess.render()
     })
