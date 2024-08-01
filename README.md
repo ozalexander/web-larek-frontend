@@ -178,4 +178,4 @@ yarn build
 ### UML-диаграмма проекта
 
 
-![Image alt](https://github.com/ozalexander/web-larek-frontend/blob/main/src/images/Web-ларёк.jpg)
+![Image alt](https://github.com/ozalexander/web-larek-frontend/blob/main/src/images/UML.jpg)
