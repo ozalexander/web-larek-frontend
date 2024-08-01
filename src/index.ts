@@ -145,10 +145,6 @@ events.on('order:submit', () => {
 })
 })
 
-events.on(/^order\..*|^contacts\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
-  appData.setOrderField(data.field, data.value);
-});
-
 events.on('contacts:submit', () => {
   const postOrder: IMakeOrder = {
     ...appData.order,
@@ -164,6 +160,10 @@ events.on('contacts:submit', () => {
   })
   .catch(err => console.error(err))
 })
+
+events.on(/^order\..*|^contacts\..*:change/, (data: { field: keyof IOrder<string>, value: string }) => {
+  appData.setOrderField(data.field, data.value);
+});
 
 events.on('formErrors:change', (errors: Partial<IOrder<string>>) => {
   if (order) {
